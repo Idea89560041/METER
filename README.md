@@ -1,2 +1,2 @@
-# MMIQA
-We introduce an end-to-end no-reference image quality assessment based multi-scale and multi-task attention learning framework (MMIQA), the code will public in the future.
+# METER
+we will introduce an end-to-end multi-task efficient transformer (METER) for no-reference image quality assessment, the code will public in the future.
