@@ -34,7 +34,7 @@ You will get a quality score and a distortion type, and a higher score indicates
 
 **Training & Testing on IQA Databases**
 
-Training and testing our model on the specified dataset.
+First add the pretrained weight to the folder   .\pretrained. Training and testing our model on the specified dataset.
 
         python train_test_IQA.py
 
