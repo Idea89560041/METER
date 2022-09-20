@@ -26,7 +26,7 @@ Image quality assessment (IQA) is a fundamental yet challenging task in computer
 
 **Testing batch images**
 
-To run the test_batch, please put pre-trained model in 'model' folder, then run:
+To run the test_batch, please put trained model in 'model' folder, then run:
 
         python test_batch.py
 
@@ -34,7 +34,7 @@ You will get a quality score and a distortion type, and a higher score indicates
 
 **Training & Testing on IQA Databases**
 
-First add the pretrained weight to the folder   .\pretrained. Training and testing our model on the specified dataset.
+First put the pretrained weight (https://drive.google.com/file/d/1W0mvaqjFVlEXSZynEJhRRg7LlsCr2AV9/view?usp=sharing) in 'pretrained' folder. Training and testing our model on the specified dataset.
 
         python train_test_IQA.py
 
