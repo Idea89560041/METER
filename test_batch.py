@@ -13,12 +13,12 @@ def pil_loader(path):
 
 
 def getresult(im_path):
-    model_hyper = models.MeterNet(16, 112, 224, 112, 56, 28, 14, 7).cuda()
-    model_hyper.train(False)
+    model_aqp = models.AQPNet(16, 112, 224, 112, 56, 28, 14, 7).cuda()
+    model_aqp.train(False)
     model_dti = models.DTINet(6, 224, 448, 224).cuda()
     model_dti.train(False)
     # load our pre-trained model
-    model_hyper.load_state_dict((torch.load('./model/AQP_XXX.pth')))
+    model_aqp.load_state_dict((torch.load('./model/AQP_XXX.pth')))
     model_dti.load_state_dict((torch.load('./model/DTI_XXX.pth')))
     transforms = torchvision.transforms.Compose([
         torchvision.transforms.Resize((224, 224)),
@@ -29,19 +29,19 @@ def getresult(im_path):
     img = pil_loader(im_path)
     img = transforms(img)
     img = torch.as_tensor(img.cuda()).unsqueeze(0)
-    paras = model_hyper(img)  # 'paras' contains the network weights conveyed to target network
+    paras = model_aqp(img)  # 'paras' contains the network weights conveyed to target network
 
-    # Building target network
-    model_target = models.TargetNet(paras).cuda()
+    # Building network
+    model_AFC = models.AFCNet(paras).cuda()
     model_DTI = model_dti.cuda()
-    for param in model_target.parameters():
+    for param in model_AFC.parameters():
         param.requires_grad = False
     for param in model_DTI.parameters():
         param.requires_grad = False
 
     # Quality prediction
     pred_type = model_DTI(paras['target_in_vec'])
-    pred = model_target(paras['target_in_vec'])  # 'paras['target_in_vec']' is the input to target net
+    pred = model_AFC(paras['target_in_vec'])  # 'paras['target_in_vec']' is the input to target net
     pred_q = torch.mul(pred_type, pred)
     pred_q = torch.sum(pred_q, dim=1, keepdim=False)
     score = pred_q.item()

@@ -23,11 +23,11 @@ default_cfgs = {
     'rest_small': _cfg(),
 }
 
-class MeterNet(nn.Module):
-    def __init__(self, lda_out_channels, hyper_in_channels, target_in_size, target_fc1_size, target_fc2_size, target_fc3_size, target_fc4_size, feature_size):
-        super(MeterNet, self).__init__()
+class AQPNet(nn.Module):
+    def __init__(self, lda_out_channels, aqp_in_channels, target_in_size, target_fc1_size, target_fc2_size, target_fc3_size, target_fc4_size, feature_size):
+        super(AQPNet, self).__init__()
 
-        self.hyperInChn = hyper_in_channels
+        self.aqpInChn = aqp_in_channels
         self.target_in_size = target_in_size
         self.f1 = target_fc1_size
         self.f2 = target_fc2_size
@@ -45,26 +45,26 @@ class MeterNet(nn.Module):
             nn.ReLU(inplace=True),
             # nn.Conv2d(1024, 512, 1, padding=(0, 0)),
             # nn.ReLU(inplace=True),
-            nn.Conv2d(256, self.hyperInChn, 1, padding=(0, 0)), #112
+            nn.Conv2d(256, self.aqpInChn, 1, padding=(0, 0)), #112
             nn.ReLU(inplace=True)
         )
 
         # Hyper network part, conv for generating target fc weights, fc for generating target fc biases
-        self.fc1w_conv = nn.Conv2d(self.hyperInChn, int(self.target_in_size * self.f1 / feature_size ** 2), 3,
+        self.fc1w_conv = nn.Conv2d(self.aqpInChn, int(self.target_in_size * self.f1 / feature_size ** 2), 3,
                                    padding=(1, 1))
-        self.fc1b_fc = nn.Linear(self.hyperInChn, self.f1)
+        self.fc1b_fc = nn.Linear(self.aqpInChn, self.f1)
 
-        self.fc2w_conv = nn.Conv2d(self.hyperInChn, int(self.f1 * self.f2 / feature_size ** 2), 3, padding=(1, 1))
-        self.fc2b_fc = nn.Linear(self.hyperInChn, self.f2)
+        self.fc2w_conv = nn.Conv2d(self.aqpInChn, int(self.f1 * self.f2 / feature_size ** 2), 3, padding=(1, 1))
+        self.fc2b_fc = nn.Linear(self.aqpInChn, self.f2)
 
-        self.fc3w_conv = nn.Conv2d(self.hyperInChn, int(self.f2 * self.f3 / feature_size ** 2), 3, padding=(1, 1))
-        self.fc3b_fc = nn.Linear(self.hyperInChn, self.f3)
+        self.fc3w_conv = nn.Conv2d(self.aqpInChn, int(self.f2 * self.f3 / feature_size ** 2), 3, padding=(1, 1))
+        self.fc3b_fc = nn.Linear(self.aqpInChn, self.f3)
 
-        self.fc4w_conv = nn.Conv2d(self.hyperInChn, int(self.f3 * self.f4 / feature_size ** 2), 3, padding=(1, 1))
-        self.fc4b_fc = nn.Linear(self.hyperInChn, self.f4)
+        self.fc4w_conv = nn.Conv2d(self.aqpInChn, int(self.f3 * self.f4 / feature_size ** 2), 3, padding=(1, 1))
+        self.fc4b_fc = nn.Linear(self.aqpInChn, self.f4)
 
-        self.fc5w_fc = nn.Linear(self.hyperInChn, self.f4*c)
-        self.fc5b_fc = nn.Linear(self.hyperInChn, c)
+        self.fc5w_fc = nn.Linear(self.aqpInChn, self.f4*c)
+        self.fc5b_fc = nn.Linear(self.aqpInChn, c)
 
         # initialize
         for i, m_name in enumerate(self._modules):
@@ -76,23 +76,23 @@ class MeterNet(nn.Module):
         res_out = self.res(img)
         target_in_vec = res_out['target_in_vec'].view(-1, self.target_in_size, 1, 1) #224*1*1
 
-        # input features for hyper net
-        hyper_in_feat = self.conv1(res_out['hyper_in_feat']).view(-1, self.hyperInChn, feature_size, feature_size) #112*7*7
-        # generating target net weights & biases
-        target_fc1w = self.fc1w_conv(hyper_in_feat).contiguous().view(-1, self.f1, self.target_in_size, 1, 1)
-        target_fc1b = self.fc1b_fc(self.pool(hyper_in_feat).squeeze()).view(-1, self.f1)
+        # input features for aqpnet
+        aqp_in_feat = self.conv1(res_out['aqp_in_feat']).view(-1, self.aqpInChn, feature_size, feature_size) #112*7*7
+        # generating AFC weights & biases
+        target_fc1w = self.fc1w_conv(aqp_in_feat).contiguous().view(-1, self.f1, self.target_in_size, 1, 1)
+        target_fc1b = self.fc1b_fc(self.pool(aqp_in_feat).squeeze()).view(-1, self.f1)
 
-        target_fc2w = self.fc2w_conv(hyper_in_feat).contiguous().view(-1, self.f2, self.f1, 1, 1)
-        target_fc2b = self.fc2b_fc(self.pool(hyper_in_feat).squeeze()).view(-1, self.f2)
+        target_fc2w = self.fc2w_conv(aqp_in_feat).contiguous().view(-1, self.f2, self.f1, 1, 1)
+        target_fc2b = self.fc2b_fc(self.pool(aqp_in_feat).squeeze()).view(-1, self.f2)
 
-        target_fc3w = self.fc3w_conv(hyper_in_feat).contiguous().view(-1, self.f3, self.f2, 1, 1)
-        target_fc3b = self.fc3b_fc(self.pool(hyper_in_feat).squeeze()).view(-1, self.f3)
+        target_fc3w = self.fc3w_conv(aqp_in_feat).contiguous().view(-1, self.f3, self.f2, 1, 1)
+        target_fc3b = self.fc3b_fc(self.pool(aqp_in_feat).squeeze()).view(-1, self.f3)
 
-        target_fc4w = self.fc4w_conv(hyper_in_feat).contiguous().view(-1, self.f4, self.f3, 1, 1)
-        target_fc4b = self.fc4b_fc(self.pool(hyper_in_feat).squeeze()).view(-1, self.f4)
+        target_fc4w = self.fc4w_conv(aqp_in_feat).contiguous().view(-1, self.f4, self.f3, 1, 1)
+        target_fc4b = self.fc4b_fc(self.pool(aqp_in_feat).squeeze()).view(-1, self.f4)
 
-        target_fc5w = self.fc5w_fc(self.pool(hyper_in_feat).squeeze()).view(-1, c, self.f4, 1, 1)
-        target_fc5b = self.fc5b_fc(self.pool(hyper_in_feat).squeeze()).view(-1, c)
+        target_fc5w = self.fc5w_fc(self.pool(aqp_in_feat).squeeze()).view(-1, c, self.f4, 1, 1)
+        target_fc5b = self.fc5b_fc(self.pool(aqp_in_feat).squeeze()).view(-1, c)
 
         out = {}
         out['target_in_vec'] = target_in_vec
@@ -136,30 +136,30 @@ class DTINet(nn.Module):
 
         return p
 
-class TargetNet(nn.Module):
+class AFCNet(nn.Module):
     """
-    Target network for quality prediction.
+    AFCNet for quality prediction.
     """
     def __init__(self, paras):
-        super(TargetNet, self).__init__()
+        super(AFCNet, self).__init__()
         self.l1 = nn.Sequential(
-            TargetFC(paras['target_fc1w'], paras['target_fc1b']),
+            AFC(paras['target_fc1w'], paras['target_fc1b']),
             nn.Sigmoid(),
         )
         self.l2 = nn.Sequential(
-            TargetFC(paras['target_fc2w'], paras['target_fc2b']),
+            AFC(paras['target_fc2w'], paras['target_fc2b']),
             nn.Sigmoid(),
         )
 
         self.l3 = nn.Sequential(
-            TargetFC(paras['target_fc3w'], paras['target_fc3b']),
+            AFC(paras['target_fc3w'], paras['target_fc3b']),
             nn.Sigmoid(),
         )
 
         self.l4 = nn.Sequential(
-            TargetFC(paras['target_fc4w'], paras['target_fc4b']),
+            AFC(paras['target_fc4w'], paras['target_fc4b']),
             nn.Sigmoid(),
-            TargetFC(paras['target_fc5w'], paras['target_fc5b']),
+            AFC(paras['target_fc5w'], paras['target_fc5b']),
         )
 
     def forward(self, x):
@@ -171,10 +171,10 @@ class TargetNet(nn.Module):
         q = self.l4(q).squeeze()
         return q
 
-class TargetFC(nn.Module):
+class AFC(nn.Module):
 
     def __init__(self, weight, bias):
-        super(TargetFC, self).__init__()
+        super(AFC, self).__init__()
         self.weight = weight
         self.bias = bias
 
@@ -505,7 +505,7 @@ class ResT(nn.Module):
         lda_4 = self.lda4_fc(self.lda4_pool(x).view(x.size(0), -1))
         vec = torch.cat((lda_1, lda_2, lda_3, lda_4), 1)
         out = {}
-        out['hyper_in_feat'] = x
+        out['aqp_in_feat'] = x
         out['target_in_vec'] = vec
 
         return out
