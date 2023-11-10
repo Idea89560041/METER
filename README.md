@@ -55,3 +55,7 @@ The code used in this research is inspired by HyperIQA (https://github.com/SSL92
 **Contact**
 
 If you have any questions, please contact us (dlmu.p.l.zhu@gmail.com)
+
+**Citation**
+
+If you find this work useful for your research, please cite our paper: Zhu P, Liu S, Liu Y, et al. METER: Multi-task efficient transformer for no-reference image quality assessment[J]. Applied Intelligence, 2023: 1-17.
